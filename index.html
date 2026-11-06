@@ -4,81 +4,118 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mumbai Air Outlook</title>
-<meta name="description" content="Hourly PM2.5 outlook for four Mumbai stations, with the weather behind it and what Diwali does to the air.">
+<meta name="description" content="Plan your days around Mumbai's air: an hour-by-hour PM2.5 outlook for four stations, the weather behind it, and what Diwali does to it.">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-:root{--bg:#f7f6f2;--card:#ffffff;--ink:#1d1f22;--muted:#5f6670;--line:#e3e1da;--accent:#1a73e8;--band:#1a73e8;
-  --obs:#444;--good:#1e8e3e;--mid:#b06000;--bad:#c5221f;--chip:#eef1f6}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--card:#1f2226;--ink:#e8e9ea;--muted:#9aa3ad;
-  --line:#33373d;--accent:#8ab4f8;--band:#8ab4f8;--obs:#cfd3d8;--good:#81c995;--mid:#fdd663;--bad:#f28b82;--chip:#2a2e34}}
-:root[data-theme="dark"]{--bg:#15171a;--card:#1f2226;--ink:#e8e9ea;--muted:#9aa3ad;--line:#33373d;--accent:#8ab4f8;--band:#8ab4f8;
-  --obs:#cfd3d8;--good:#81c995;--mid:#fdd663;--bad:#f28b82;--chip:#2a2e34}
+:root{--bg:#f6f5f1;--card:#ffffff;--ink:#1b1d20;--muted:#5d646d;--line:#e2dfd7;--accent:#1a73e8;--band:#1a73e8;--obs:#3c4043;--chip:#eef1f6;
+  --good:#1e8e3e;--satisfactory:#7cb342;--moderate:#f9ab00;--poor:#f57c00;--verypoor:#d93025;--severe:#7b1fa2;--fest:#8e24aa;
+  --ok:#1e8e3e;--mid:#b06000;--bad:#c5221f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141618;--card:#1e2125;--ink:#e8e9ea;--muted:#9aa3ad;--line:#32363c;
+  --accent:#8ab4f8;--band:#8ab4f8;--obs:#cfd3d8;--chip:#2a2e34;--ok:#81c995;--mid:#fdd663;--bad:#f28b82;--fest:#ce93d8}}
+:root[data-theme="dark"]{--bg:#141618;--card:#1e2125;--ink:#e8e9ea;--muted:#9aa3ad;--line:#32363c;--accent:#8ab4f8;--band:#8ab4f8;--obs:#cfd3d8;
+  --chip:#2a2e34;--ok:#81c995;--mid:#fdd663;--bad:#f28b82;--fest:#ce93d8}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{padding:28px 16px 8px;max-width:1080px;margin:0 auto}
-h1{font-size:30px;margin:0 0 4px;letter-spacing:-.01em}
-.sub{color:var(--muted);margin:0 0 6px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+header{padding:28px 0 10px}
+h1{font-size:32px;margin:0 0 4px;letter-spacing:-.015em}
+.sub{color:var(--muted);margin:0 0 6px;font-size:17px}
 .meta{color:var(--muted);font-size:13px}
-nav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:5}
-nav .in{max-width:1080px;margin:0 auto;display:flex;gap:4px;padding:6px 16px;overflow-x:auto}
-nav button{background:none;border:0;padding:10px 14px;font:inherit;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0 6px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;border-top:5px solid var(--line);cursor:pointer}
+.tile:hover{border-color:var(--accent)}
+.tile .n{font-weight:700}
+.tile .v{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:2px 0 0}
+.tile .u{font-size:12px;color:var(--muted)}
+.tile .tags{margin-top:6px}
+nav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:5;margin-top:10px}
+nav .in{display:flex;gap:2px;overflow-x:auto}
+nav button{background:none;border:0;padding:12px 14px;font:inherit;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
 nav button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
-main{max-width:1080px;margin:0 auto;padding:16px}
+main{padding:16px 0}
 section[hidden]{display:none}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 16px}
-.card h2{margin:0 0 4px;font-size:20px}
-.card h3{margin:16px 0 6px;font-size:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:0 0 16px}
+.card h2{margin:0 0 4px;font-size:21px}
+.card h3{margin:18px 0 6px;font-size:16px}
 .lead{color:var(--muted);margin:0 0 12px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
 .chips button{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer}
 .chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 .chart{width:100%;height:300px}
-.chart.short{height:180px}
-.days{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.chart.short{height:190px}
+.chart.evid{height:260px}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;margin:2px 4px 0 0;color:#fff}
+.tag.stagnant{background:var(--bad)}.tag.mixed{background:var(--mid)}.tag.ventilated{background:var(--ok)}
+.tag.fest{background:var(--fest)}
+.tag.good{background:var(--good)}.tag.satisfactory{background:var(--satisfactory)}.tag.moderate{background:var(--moderate);color:#1b1d20}
+.tag.poor{background:var(--poor)}.tag.verypoor{background:var(--verypoor)}.tag.severe{background:var(--severe)}
+.plan{display:flex;flex-direction:column;gap:12px}
+.prow{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.prow.fest{border-color:var(--fest)}
+.prow .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px}
+.prow .d{font-weight:700;min-width:110px}
+.prow .r{font-weight:800;font-size:18px}
+.strip{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;margin:8px 0 2px}
+.strip i{display:block;height:18px;border-radius:3px;background:var(--line)}
+.strip i.best{outline:2px solid var(--ink);outline-offset:-2px}
+.strip.sc i{height:7px;opacity:.75}
+.hrs{display:grid;grid-template-columns:repeat(24,1fr);font-size:10px;color:var(--muted)}
+.hrs span:nth-child(odd){visibility:hidden}
+.adv{margin:8px 0 0;font-size:14px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.days{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .day{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg)}
-.day .d{font-weight:700}
-.day .r{font-size:22px;font-weight:700;margin:2px 0}
-.day .u{font-size:12px;color:var(--muted)}
-.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;margin-top:6px}
-.tag.stagnant{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
-.tag.mixed{background:color-mix(in srgb,var(--mid) 22%,transparent);color:var(--mid)}
-.tag.ventilated{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
-.tag.diwali{background:color-mix(in srgb,#7b1fa2 18%,transparent);color:#9c4dcc}
-.day.fest{border-color:#9c4dcc}
-.fest-note{grid-column:1/-1;margin:0}
+.day.fest{border-color:var(--fest)}
+.day .d{font-weight:700}.day .r{font-size:22px;font-weight:700;margin:2px 0}.day .u{font-size:12px;color:var(--muted)}
 table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--muted);font-weight:600}
-#map{height:420px;border-radius:10px}
-.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--muted);margin-top:8px}
-.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:-1px}
-footer{max-width:1080px;margin:0 auto;padding:8px 16px 40px;color:var(--muted);font-size:13px}
+#map{height:440px;border-radius:10px}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:10px 0}
+.stat div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+.stat b{font-size:24px;display:block}
+.stat span{font-size:13px;color:var(--muted)}
+footer{padding:8px 0 40px;color:var(--muted);font-size:13px}
 a{color:var(--accent)}
 .note{font-size:13px;color:var(--muted)}
-@media (max-width:600px){h1{font-size:24px}.chart{height:240px}}
+@media (max-width:640px){h1{font-size:26px}.chart{height:240px}.strip i{height:14px}}
 </style>
 </head>
 <body>
+<div class="wrap">
 <header>
   <h1>Mumbai Air Outlook</h1>
-  <p class="sub">Hourly PM2.5 for four Mumbai monitoring stations: what the next week looks like, the weather behind it, and what Diwali does to the air.</p>
+  <p class="sub">Plan your days around the air: an hour-by-hour PM2.5 outlook for four Mumbai stations, the weather behind it, and what Diwali does to it.</p>
   <p class="meta" id="meta"></p>
+  <div class="hero" id="hero"></div>
 </header>
 <nav><div class="in" role="tablist">
-  <button role="tab" aria-selected="true" data-tab="outlook">Outlook</button>
+  <button role="tab" aria-selected="true" data-tab="plan">Plan your day</button>
+  <button role="tab" aria-selected="false" data-tab="outlook">Outlook</button>
   <button role="tab" aria-selected="false" data-tab="diwali">Diwali lens</button>
+  <button role="tab" aria-selected="false" data-tab="why">Why ventilation</button>
   <button role="tab" aria-selected="false" data-tab="map">Map</button>
   <button role="tab" aria-selected="false" data-tab="about">About</button>
 </div></nav>
 <main>
-<section id="outlook">
+<section id="plan">
+  <div class="card">
+    <h2>Plan your day</h2>
+    <p class="lead">Each row is a day; each cell an hour, coloured on the Indian AQI scale from the central forecast. The outlined cells are the cleanest three hours for a run or a walk. On Diwali days a thin second strip shows the hours scaled by what past Diwalis did.</p>
+    <div class="chips" id="planChips"></div>
+    <div class="plan" id="planRows"></div>
+    <div class="legend" id="planLegend"></div>
+  </div>
+</section>
+<section id="outlook" hidden>
   <div class="card">
     <h2>Seven-day outlook</h2>
     <p class="lead">The grey line is what the station measured; the blue band is the range our forecast commits to for each hour. The level of a day is set mostly by how well the air mixes, which is the second chart.</p>
     <div class="chips" id="stChips"></div>
     <div id="outlookChart" class="chart"></div>
     <h3>Ventilation: how much air moves through</h3>
-    <p class="note">Boundary-layer height times wind speed (m²/s, log scale). The day labels below use the night hours (20:00–07:00), when the layer is shallow and pollution builds up: below the lower dashed line the night is stagnant for the season, above the upper one it is well ventilated.</p>
+    <p class="note">Boundary-layer height times wind speed (m²/s, log scale). The day labels use the night hours (20:00–07:00), when the layer is shallow and pollution builds up: below the lower dashed line the night is stagnant for the season, above the upper one it is well ventilated.</p>
     <div id="ventChart" class="chart short"></div>
     <h3>Day by day</h3>
     <div class="days" id="days"></div>
@@ -89,17 +126,26 @@ a{color:var(--accent)}
     <h2>What Diwali does to Mumbai's air</h2>
     <p class="lead">Every available Diwali in the challenge data, lined up on the same clock: hours before and after midnight at the start of Diwali day. Each line is the typical (median) Mumbai station that year.</p>
     <div id="diwaliChart" class="chart"></div>
-    <table id="diwaliTable"><thead><tr><th>Diwali</th><th>Stations</th><th>Before (D-3 to D-1)</th><th>Peak</th><th>Back to normal</th></tr></thead><tbody></tbody></table>
+    <table id="diwaliTable"><thead><tr><th>Diwali</th><th>Stations</th><th>Before (D-3 to D-2)</th><th>Peak</th><th>Back to normal</th></tr></thead><tbody></tbody></table>
     <h3>The four stations in one year</h3>
     <div class="chips" id="yearChips"></div>
     <div id="diwaliStations" class="chart"></div>
     <p class="note" id="diwaliNote"></p>
   </div>
 </section>
+<section id="why" hidden>
+  <div class="card">
+    <h2>Why ventilation sets the level</h2>
+    <p class="lead">PM2.5 in Mumbai is largely a mixing problem: the same emissions under a shallow, calm night build up to a higher concentration. We checked that against the data: for every station-day since February 2025, the night-time ventilation (boundary-layer height × wind, 20:00–07:00, from Open-Meteo) against that day's mean PM2.5 from the challenge data.</p>
+    <div id="evidChart" class="chart evid"></div>
+    <div class="stat" id="evidStats"></div>
+    <p class="note" id="evidNote"></p>
+  </div>
+</section>
 <section id="map" hidden>
   <div class="card">
     <h2>Where the stations are</h2>
-    <p class="lead">The four forecast stations (ringed) and the other Mumbai stations in the challenge history, coloured by their latest provided reading.</p>
+    <p class="lead">The four forecast stations (ringed) carry today's forecast band. The other Mumbai stations in the challenge history show their mean over their last 30 days in the data.</p>
     <div id="map"></div>
     <div class="legend" id="mapLegend"></div>
   </div>
@@ -107,19 +153,20 @@ a{color:var(--accent)}
 <section id="about" hidden>
   <div class="card">
     <h2>About</h2>
-    <p>This page is an additional submission to the Google Mumbai Data Challenge (Zindi, 2026). It turns the challenge's forecasting task into something a resident can act on: which hours of which days to avoid, and how long the air takes to recover after Diwali.</p>
+    <p>This page is an additional submission to the Google Mumbai Data Challenge (Zindi, 2026). It turns the challenge's forecasting task into something a resident can act on: which hours of which days to be outdoors, and how long the air takes to recover after Diwali.</p>
     <h3>How to read the outlook</h3>
-    <p>The band is not a confidence interval from a formula. It is the pair of forecasts we actually submit, one scaled low and one scaled high around a five-model average (two Chronos-2 zero-shot runs with weather covariates, a weather-driven gradient-boosting model, and two covariate variants). In the backtests the daily level is the part a six-day forecast gets wrong most, so the band spans the level; the hourly shape inside a day is well predicted.</p>
+    <p>The band is not a confidence interval from a formula. It is the pair of forecasts we actually submit, one scaled low and one scaled high around a five-model average (Chronos-2 zero-shot runs with weather covariates, a weather-driven gradient-boosting model, and covariate variants). In the backtests the daily level is the part a six-day forecast gets wrong most, so the band spans the level; the hourly shape inside a day is well predicted. The central line is the unscaled average.</p>
     <h3>Why ventilation</h3>
-    <p>PM2.5 in Mumbai is a mixing problem. When the boundary layer is shallow and the wind drops, the same emissions build up to several times the concentration. The ventilation index multiplies the forecast boundary-layer height by the 10 m wind speed; its seasonal terciles give the stagnant, mixed and ventilated labels.</p>
+    <p>The ventilation index multiplies the forecast boundary-layer height by the 10 m wind speed. Its night-time terciles over 15 Oct to 15 Dec 2025 give the stagnant, mixed and ventilated labels. The "Why ventilation" tab shows how much it explains, and how much it does not.</p>
     <h3>Data and licences</h3>
     <ul id="sources"></ul>
-    <h3>Tools</h3>
-    <p>Charts by Google Charts; the data behind the page is rebuilt from the challenge files and the live Open-Meteo API in a <a href="https://colab.research.google.com/github/vaibhavgupta9876/mumbai-air-outlook/blob/main/notebook.ipynb" target="_blank" rel="noopener">Google Colab notebook</a>; code, data and method notes are in the <a href="https://github.com/vaibhavgupta9876/mumbai-air-outlook" target="_blank" rel="noopener">GitHub repository</a>. Map tiles by OpenStreetMap through Leaflet. Weather from Open-Meteo, which is listed in the ClimateVerse challenge catalogue. No live station readings beyond the released challenge files were used.</p>
+    <h3>Tools and reproducibility</h3>
+    <p id="tools">Charts by Google Charts. The data behind the page is rebuilt every morning by a GitHub Action from the challenge files, the forecast pair and the live Open-Meteo API, and can be rebuilt by anyone in a <a href="https://colab.research.google.com/github/vaibhavgupta9876/mumbai-air-outlook/blob/main/notebook.ipynb" target="_blank" rel="noopener">Google Colab notebook</a>, nothing to upload. Code, data and method notes are in the <a href="https://github.com/vaibhavgupta9876/mumbai-air-outlook" target="_blank" rel="noopener">GitHub repository</a>. Map tiles by OpenStreetMap through Leaflet. No live station readings beyond the released challenge files are used.</p>
   </div>
 </section>
 </main>
 <footer id="foot"></footer>
+</div>
 <script src="https://www.gstatic.com/charts/loader.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -127,19 +174,30 @@ const $ = s => document.querySelector(s);
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 let D, station, year, mapObj;
 const ym = {2018:"#9aa0a6", 2019:"#f9ab00", 2024:"#1a73e8", 2025:"#d93025", 2026:"#188038"};
+const CATS = [[30,"good"],[60,"satisfactory"],[90,"moderate"],[120,"poor"],[250,"very poor"],[1e9,"severe"]];
+const catOf = v => { for (const [ub, n] of CATS) if (v <= ub) return n; return "severe"; };
+const catCls = n => n.replace(" ", "");
+const catColor = n => css("--" + catCls(n));
+const two = n => String(n).padStart(2, "0");
+const hrs = b => b && b.length === 2 ? `${two(b[0])}:00–${two(b[1] % 24)}:00` : "";
+const dayName = s => new Date(s + "T00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+const fmt = s => new Date(s.replace(" ", "T")).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
+const P = s => new Date(s);
 
 fetch("data.json").then(r => r.json()).then(d => { D = d; station = D.stations[0].id; init(); });
 
 function init() {
   const wp = D.weather_pull ? `${D.weather_pull.slice(6, 8)} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+D.weather_pull.slice(4, 6) - 1]} ${D.weather_pull.slice(9, 11)}:00` : "";
-  $("#meta").textContent = `Forecast built from station data to ${fmt(D.train_end_ist)} IST and the Open-Meteo weather run pulled ${wp} IST; outlook ${D.window.start} to ${D.window.end}. Page generated ${D.generated_ist} IST.`;
+  $("#meta").textContent = `Station data to ${fmt(D.train_end_ist)} IST, weather run pulled ${wp} IST, outlook ${D.window.start} to ${D.window.end}. Page data generated ${D.generated_ist} IST.`;
   D.sources.forEach(s => { const li = document.createElement("li"); li.textContent = s; $("#sources").appendChild(li); });
+  if (D.advice_source && D.advice_source !== "template") $("#tools").insertAdjacentText("beforeend", ` The day-by-day advice is written by ${D.advice_source} from the forecast numbers.`);
   $("#foot").textContent = "Built for the Google Mumbai Data Challenge's Most Creative Submission category. Not an official advisory: for health decisions use CPCB and BMC bulletins.";
   document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
-  D.stations.forEach(s => {
+  drawHero();
+  for (const id of ["planChips", "stChips"]) D.stations.forEach(s => {
     const b = document.createElement("button"); b.textContent = s.short; b.setAttribute("aria-pressed", s.id === station);
-    b.addEventListener("click", () => { station = s.id; document.querySelectorAll("#stChips button").forEach(x => x.setAttribute("aria-pressed", x === b)); drawOutlook(); });
-    $("#stChips").appendChild(b);
+    b.addEventListener("click", () => setStation(s.id));
+    $("#" + id).appendChild(b);
   });
   const withTargets = D.diwali.filter(y => Object.keys(y.targets).length);
   year = withTargets.length ? withTargets[withTargets.length - 1].year : null;
@@ -148,74 +206,101 @@ function init() {
     b.addEventListener("click", () => { year = y.year; document.querySelectorAll("#yearChips button").forEach(x => x.setAttribute("aria-pressed", x === b)); drawDiwaliStations(); });
     $("#yearChips").appendChild(b);
   });
+  drawPlan();
   google.charts.load("current", { packages: ["corechart"] });
-  google.charts.setOnLoadCallback(() => { drawOutlook(); drawDiwali(); drawDiwaliStations(); setTimeout(drawOutlook, 400); });
-  window.addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(() => { drawOutlook(); drawDiwali(); drawDiwaliStations(); }, 200); });
+  google.charts.setOnLoadCallback(() => { drawAll(); setTimeout(drawAll, 400); });
+  window.addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(drawAll, 200); });
 }
-
+function drawAll() { drawOutlook(); drawDiwali(); drawDiwaliStations(); drawEvidence(); }
+function setStation(id) {
+  station = id;
+  document.querySelectorAll("#planChips button, #stChips button").forEach(x => x.setAttribute("aria-pressed", x.textContent === D.stations.find(s => s.id === id).short));
+  document.querySelectorAll(".tile").forEach(t => t.style.outline = t.dataset.id === id ? `2px solid ${css("--accent")}` : "none");
+  drawPlan(); drawOutlook();
+}
 function showTab(t) {
   document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
   document.querySelectorAll("main section").forEach(s => s.hidden = s.id !== t);
-  if (t === "map") drawMap(); else if (t === "outlook") drawOutlook(); else if (t === "diwali") { drawDiwali(); drawDiwaliStations(); }
+  if (t === "map") drawMap(); else if (t === "outlook") drawOutlook(); else if (t === "diwali") { drawDiwali(); drawDiwaliStations(); } else if (t === "why") drawEvidence();
+  window.scrollTo({ top: Math.min(window.scrollY, $("nav").offsetTop), behavior: "instant" });
 }
-const fmt = s => { const d = new Date(s.replace(" ", "T")); return d.toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }); };
-const P = s => new Date(s);
+
+function drawHero() {
+  $("#hero").innerHTML = D.stations.map(s => {
+    const h = D.hero[s.id]; const dir = h.mid > h.obs_week * 1.1 ? "up from" : h.mid < h.obs_week * 0.9 ? "down from" : "close to";
+    return `<div class="tile" data-id="${s.id}" style="border-top-color:${catColor(h.category)};${s.id === station ? `outline:2px solid ${css("--accent")}` : ""}" title="Show ${s.short}">
+      <div class="n">${s.short}</div><div class="v">${Math.round(h.low)}–${Math.round(h.high)}</div>
+      <div class="u">µg/m³ today, ${dir} ${Math.round(h.obs_week)} measured in the week to ${new Date(h.obs_end + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>
+      <div class="tags"><span class="tag ${catCls(h.category)}">${h.category}</span><span class="tag ${h.label}">${h.label} night</span>${h.diwali ? `<span class="tag fest">${h.diwali}</span>` : ""}</div>
+      <div class="u">cleanest ${hrs(h.best)}, worst ${hrs(h.worst)}</div></div>`;
+  }).join("");
+  document.querySelectorAll(".tile").forEach(t => t.addEventListener("click", () => { setStation(t.dataset.id); showTab("plan"); }));
+}
+
+function drawPlan() {
+  const o = D.outlook[station]; const f = D.diwali_factor; const fm = f.length ? (f[0] + f[1]) / 2 : 1;
+  $("#planRows").innerHTML = D.daily[station].map((r, di) => {
+    const mids = o.mid.slice(di * 24, di * 24 + 24), highs = o.high.slice(di * 24, di * 24 + 24);
+    const cells = mids.map((v, h) => `<i class="${r.best && h >= r.best[0] && h < r.best[1] ? "best" : ""}" style="background:${v == null ? "var(--line)" : catColor(catOf(v))}" title="${two(h)}:00 ${v == null ? "" : Math.round(v) + " µg/m³ (" + catOf(v) + "), up to " + Math.round(highs[h])}"></i>`).join("");
+    const sc = r.diwali && f.length ? `<div class="strip sc" title="Scaled by ${fm.toFixed(2)}x, the mid-point of past Diwalis">${mids.map(v => `<i style="background:${v == null ? "var(--line)" : catColor(catOf(v * fm))}"></i>`).join("")}</div>` : "";
+    return `<div class="prow${r.diwali ? " fest" : ""}"><div class="top"><span class="d">${dayName(r.date)}</span><span class="r">${Math.round(r.low)}–${Math.round(r.high)} <small style="font-weight:400;color:var(--muted)">µg/m³</small></span>
+      <span class="tag ${catCls(r.category)}">${r.category}</span><span class="tag ${r.label}">${r.label} night</span>${r.diwali ? `<span class="tag fest">${r.diwali}</span>` : ""}</div>
+      <div class="strip">${cells}</div>${sc}<div class="hrs">${Array.from({ length: 24 }, (_, h) => `<span>${h}</span>`).join("")}</div>
+      <p class="adv">${r.advice}</p></div>`;
+  }).join("");
+  $("#planLegend").innerHTML = CATS.map(([v, n]) => `<span><i style="background:${catColor(n)}"></i>${n}${v < 1e9 ? " ≤ " + v : ""}</span>`).join("") + `<span><i style="outline:2px solid var(--ink);outline-offset:-2px"></i>cleanest 3 hours</span>` + (f.length ? `<span>thin strip: hours × ${fm.toFixed(2)} (past Diwalis ran ${f[0]}–${f[1]}×)</span>` : "");
+}
+
 function base(extra) {
-  return Object.assign({ backgroundColor: "transparent", chartArea: { left: 48, right: 12, top: 12, bottom: 36 }, legend: { position: "bottom", textStyle: { color: css("--muted") } },
+  return Object.assign({ backgroundColor: "transparent", chartArea: { left: 52, right: 12, top: 12, bottom: 40 }, legend: { position: "bottom", textStyle: { color: css("--muted") } },
     hAxis: { textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, minorGridlines: { count: 0 } },
     vAxis: { textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, minorGridlines: { count: 0 }, viewWindow: { min: 0 }, baselineColor: css("--line") },
     fontName: "system-ui", fontSize: 12 }, extra);
 }
 
 function drawOutlook() {
-  if (!google.visualization) return;
+  if (!google.visualization || $("#outlook").hidden) return;
   const o = D.outlook[station], obs = D.observed[station];
   const dt = new google.visualization.DataTable();
   dt.addColumn("datetime", "Hour"); dt.addColumn("number", "Measured"); dt.addColumn("number", "Forecast");
   dt.addColumn({ type: "number", role: "interval" }); dt.addColumn({ type: "number", role: "interval" });
   obs.t.forEach((t, i) => dt.addRow([P(t), obs.v[i], null, null, null]));
   o.t.forEach((t, i) => dt.addRow([P(t), null, o.mid[i], o.low[i], o.high[i]]));
-  const opts = base({ series: { 0: { color: css("--obs"), lineWidth: 1.5 }, 1: { color: css("--band"), lineWidth: 2 } },
+  new google.visualization.LineChart($("#outlookChart")).draw(dt, base({ series: { 0: { color: css("--obs"), lineWidth: 1.5 }, 1: { color: css("--band"), lineWidth: 2 } },
     intervals: { style: "area", color: css("--band"), fillOpacity: 0.22 }, interpolateNulls: false,
     hAxis: { format: "d MMM", textStyle: { color: css("--muted") }, gridlines: { color: css("--line"), units: { days: { format: ["d MMM"] } } }, minorGridlines: { count: 0 } },
-    vAxis: { title: "PM2.5 µg/m³", titleTextStyle: { color: css("--muted"), italic: false }, textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, viewWindow: { min: 0 } } });
-  new google.visualization.LineChart($("#outlookChart")).draw(dt, opts);
+    vAxis: { title: "PM2.5 µg/m³", titleTextStyle: { color: css("--muted"), italic: false }, textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, viewWindow: { min: 0 } } }));
   const v = D.ventilation[station], [t1, t2] = D.vc_terciles;
   const vt = new google.visualization.DataTable();
   vt.addColumn("datetime", "Hour"); vt.addColumn("number", "Ventilation"); vt.addColumn("number", "Stagnant below"); vt.addColumn("number", "Ventilated above");
   v.t.forEach((t, i) => vt.addRow([P(t), v.vc[i], t1, t2]));
-  new google.visualization.LineChart($("#ventChart")).draw(vt, base({ legend: { position: "none" }, chartArea: { left: 48, right: 12, top: 8, bottom: 28 },
-    series: { 0: { color: css("--good"), lineWidth: 1.5 }, 1: { color: css("--bad"), lineWidth: 1, lineDashStyle: [4, 4] }, 2: { color: css("--good"), lineWidth: 1, lineDashStyle: [4, 4] } },
+  new google.visualization.LineChart($("#ventChart")).draw(vt, base({ legend: { position: "none" }, chartArea: { left: 52, right: 12, top: 8, bottom: 28 },
+    series: { 0: { color: css("--ok"), lineWidth: 1.5 }, 1: { color: css("--bad"), lineWidth: 1, lineDashStyle: [4, 4] }, 2: { color: css("--ok"), lineWidth: 1, lineDashStyle: [4, 4] } },
     vAxis: { logScale: true, viewWindow: { min: 50 }, ticks: [100, 300, 1000, 3000, 10000], textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, minorGridlines: { count: 0 } },
     hAxis: { format: "d MMM", textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, minorGridlines: { count: 0 } } }));
-  $("#days").innerHTML = D.daily[station].map(r => {
-    const d = new Date(r.date + "T00:00"); const w = r.worst;
-    const hrs = w.length === 2 ? `${String(w[0]).padStart(2, "0")}:00–${String(w[1] % 24).padStart(2, "0")}:00` : "";
-    return `<div class="day${r.diwali ? " fest" : ""}"><div class="d">${d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}</div>
+  $("#days").innerHTML = D.daily[station].map(r => `<div class="day${r.diwali ? " fest" : ""}"><div class="d">${dayName(r.date)}</div>
       <div class="r">${Math.round(r.low)}–${Math.round(r.high)}</div><div class="u">µg/m³ daily mean, band</div>
-      <span class="tag ${r.label}">${r.label}</span>${r.diwali ? ` <span class="tag diwali">${r.diwali}</span>` : ""}<div class="u">worst hours ${hrs}</div></div>`;
-  }).join("") + (D.daily[station].some(r => r.diwali) && D.diwali_note ? `<p class="note fest-note">${D.diwali_note} See the Diwali lens.</p>` : "");
+      <span class="tag ${catCls(r.category)}">${r.category}</span><span class="tag ${r.label}">${r.label}</span>${r.diwali ? `<span class="tag fest">${r.diwali}</span>` : ""}<div class="u">worst hours ${hrs(r.worst)}</div></div>`).join("");
 }
 
 function drawDiwali() {
-  if (!google.visualization) return;
+  if (!google.visualization || $("#diwali").hidden) return;
   const dt = new google.visualization.DataTable();
   dt.addColumn("number", "Hours from Diwali 00:00");
-  D.diwali.forEach(y => dt.addColumn("number", `${y.year} (${y.n_stations} station${y.n_stations > 1 ? "s" : ""})`));
-  const rel = D.diwali[0].rel;
-  rel.forEach((h, i) => dt.addRow([h, ...D.diwali.map(y => y.city[i])]));
+  D.diwali.forEach(y => dt.addColumn("number", `${y.year} (${y.n_stations} station${y.n_stations > 1 ? "s" : ""}${y.partial ? ", so far" : ""})`));
+  D.diwali[0].rel.forEach((h, i) => dt.addRow([h, ...D.diwali.map(y => y.city[i])]));
   const ticks = []; for (let h = -72; h <= 120; h += 24) ticks.push({ v: h, f: h < 0 ? `D${h / 24}` : h === 0 ? "Diwali" : `D+${h / 24}` });
   new google.visualization.LineChart($("#diwaliChart")).draw(dt, base({ interpolateNulls: true,
     series: Object.fromEntries(D.diwali.map((y, i) => [i, { color: ym[y.year] || css("--accent"), lineWidth: y.n_stations >= 3 ? 2.2 : 1.2, lineDashStyle: y.n_stations >= 3 ? null : [6, 4] }])),
     hAxis: { ticks, textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, minorGridlines: { count: 0 } },
     vAxis: { title: "PM2.5 µg/m³ (median station)", titleTextStyle: { color: css("--muted"), italic: false }, textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, viewWindow: { min: 0 } } }));
-  const lab = h => { const day = Math.floor(h / 24), hr = ((h % 24) + 24) % 24; return (day < 0 ? `D${day}` : day === 0 ? "Diwali" : `D+${day}`) + ` ${String(hr).padStart(2, "0")}:00`; };
-  $("#diwaliTable tbody").innerHTML = D.diwali.map(y => `<tr><td><b style="color:${ym[y.year]}">${y.year}</b> (${y.date})</td><td>${y.n_stations}</td><td>${Math.round(y.baseline)} µg/m³</td>
-    <td>${y.peak_value == null ? "" : Math.round(y.peak_value) + " µg/m³ at " + lab(y.peak_rel)}</td><td>${y.clear_rel == null ? "not within D+5" : lab(y.clear_rel) + (y.excess ? ` (festival days ran ${y.excess}× the baseline)` : "")}</td></tr>`).join("");
+  const lab = h => { const day = Math.floor(h / 24), hr = ((h % 24) + 24) % 24; return (day < 0 ? `D${day}` : day === 0 ? "Diwali" : `D+${day}`) + ` ${two(hr)}:00`; };
+  $("#diwaliTable tbody").innerHTML = D.diwali.map(y => `<tr><td><b style="color:${ym[y.year]}">${y.year}</b> (${y.date})${y.partial ? "<br><small>still unfolding</small>" : ""}</td><td>${y.n_stations}</td><td>${Math.round(y.baseline)} µg/m³</td>
+    <td>${y.peak_value == null ? "" : Math.round(y.peak_value) + " µg/m³ at " + lab(y.peak_rel)}</td><td>${y.clear_rel == null ? (y.partial ? "not yet" : "not within D+5") : lab(y.clear_rel)}${y.excess ? `<br><small>festival days ran ${y.excess}× the baseline</small>` : ""}</td></tr>`).join("");
 }
 
 function drawDiwaliStations() {
-  if (!google.visualization || year == null) return;
+  if (!google.visualization || year == null || $("#diwali").hidden) return;
   const y = D.diwali.find(x => x.year === year); const ids = Object.keys(y.targets);
   const dt = new google.visualization.DataTable();
   dt.addColumn("number", "Hours from Diwali 00:00");
@@ -225,20 +310,34 @@ function drawDiwaliStations() {
   new google.visualization.LineChart($("#diwaliStations")).draw(dt, base({ interpolateNulls: true,
     hAxis: { ticks, textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, minorGridlines: { count: 0 } },
     vAxis: { title: "PM2.5 µg/m³", titleTextStyle: { color: css("--muted"), italic: false }, textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, viewWindow: { min: 0 } } }));
-  $("#diwaliNote").textContent = `${year}: ${y.source}. ${ids.length < 4 ? "Stations missing that year are not shown." : ""} The 2026 line appears once the final challenge data release covers Diwali (8 November 2026).`;
+  $("#diwaliNote").textContent = `${year}: ${y.source}. ${ids.length < 4 ? "Stations missing that year are not shown. " : ""}The ${new Date(D.diwali_2026).getFullYear()} line appears once the challenge data covers Diwali (${D.diwali_2026}).`;
 }
 
-function pmColor(v) { return v <= 30 ? "#1e8e3e" : v <= 60 ? "#7cb342" : v <= 90 ? "#f9ab00" : v <= 120 ? "#f57c00" : v <= 250 ? "#d93025" : "#7b1fa2"; }
+function drawEvidence() {
+  if (!google.visualization || $("#why").hidden) return;
+  const E = D.evidence; const names = Object.keys(E);
+  const dt = new google.visualization.DataTable();
+  dt.addColumn("string", "Night ventilation"); names.forEach(n => dt.addColumn("number", n));
+  [["low", "bottom third (stagnant)"], ["mid", "middle third"], ["high", "top third (ventilated)"]].forEach(([k, l]) => dt.addRow([l, ...names.map(n => E[n][k])]));
+  new google.visualization.ColumnChart($("#evidChart")).draw(dt, base({ series: { 0: { color: css("--bad") }, 1: { color: css("--accent") } },
+    vAxis: { title: "median PM2.5 that day, µg/m³", titleTextStyle: { color: css("--muted"), italic: false }, textStyle: { color: css("--muted") }, gridlines: { color: css("--line") }, viewWindow: { min: 0 } } }));
+  $("#evidStats").innerHTML = names.map(n => { const e = E[n]; const pct = Math.round((e.low / e.high - 1) * 100);
+    return `<div><b>${pct > 0 ? "+" : ""}${pct}%</b><span>${n}: stagnant nights vs ventilated nights, median of ${e.n} station-days (r = ${e.corr})</span></div>`; }).join("");
+  $("#evidNote").textContent = "The effect is real but modest day to day: ventilation sets the floor the city sits on, while emissions (Diwali, traffic, burning) and weather regimes lasting days set the big swings. That is why the outlook commits to a band rather than a point.";
+}
+
 function drawMap() {
   if (mapObj) { mapObj.invalidateSize(); return; }
   mapObj = L.map("map", { scrollWheelZoom: false }).setView([19.08, 72.88], 11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap contributors" }).addTo(mapObj);
   D.map.forEach(p => {
-    const m = L.circleMarker([p.lat, p.lon], { radius: p.target ? 11 : 7, color: p.target ? css("--ink") : pmColor(p.latest_v), weight: p.target ? 3 : 1, fillColor: pmColor(p.latest_v), fillOpacity: 0.85 }).addTo(mapObj);
-    m.bindPopup(`<b>${p.name}</b><br>${p.latest_v} µg/m³ at ${fmt(p.latest_t)}<br>${p.target ? "forecast station" : "history station"}, ${p.n_hours} hours in the data<br><a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">Open in Google Maps</a>`);
+    const v = p.target ? p.today_mid : p.recent_mean; const c = catColor(catOf(v));
+    const m = L.circleMarker([p.lat, p.lon], { radius: p.target ? 12 : 7, color: p.target ? css("--ink") : c, weight: p.target ? 3 : 1, fillColor: c, fillOpacity: 0.85 }).addTo(mapObj);
+    const body = p.target ? `today ${Math.round(p.today_low)}–${Math.round(p.today_high)} µg/m³ (${catOf(v)})<br>last measured ${p.latest_v} at ${fmt(p.latest_t)}`
+      : `${p.recent_mean} µg/m³ mean, ${p.recent_from} to ${p.recent_to}${p.flag ? "<br><i>" + p.flag + "</i>" : ""}`;
+    m.bindPopup(`<b>${p.name}</b><br>${body}<br>${p.target ? "forecast station" : "history station"}, ${p.n_hours} hours in the data<br><a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">Open in Google Maps</a>`);
   });
-  $("#mapLegend").innerHTML = [[30, "good"], [60, "satisfactory"], [90, "moderate"], [120, "poor"], [250, "very poor"], [999, "severe"]]
-    .map(([v, n]) => `<span><i style="background:${pmColor(v)}"></i>${n}</span>`).join("") + "<span>Indian AQI PM2.5 bands; ring = forecast station</span>";
+  $("#mapLegend").innerHTML = CATS.map(([v, n]) => `<span><i style="background:${catColor(n)};border-radius:50%"></i>${n}</span>`).join("") + "<span>Indian AQI PM2.5 bands; ring = forecast station</span>";
 }
 </script>
 </body>

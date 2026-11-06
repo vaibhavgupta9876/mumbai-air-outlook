@@ -1,0 +1,34 @@
+Additional Mumbai history
+
+History_Mumbai_2018_2020.csv.gz: 87,717 rows. CPCB-derived historical
+station data (Rohan Rao dataset). Datetime, StationId, StationName and
+PM2.5 identify the observations. Other pollutant and AQI columns are
+retained. AQI fields are not known future inputs.
+
+History_Mumbai_2024.csv.gz: 216,472 rows. XKDR archive with CPCB/AirNow
+series identifiers. collected_at/timestamp_ist are source timestamps
+in IST; value is PM2.5 concentration. Averaging intervals have not been
+fully aligned to current OpenAQ hour-ending targets.
+
+Legacy_Observations_2020_2022.csv.gz: 12,452 irregular OpenAQ samples.
+datetime, location_id, sensors_id and value identify source observations.
+These samples are not qualified hourly labels under the current rule.
+
+Other_Mumbai_Stations_2025_2026.csv.gz: 9,125 qualified hourly observations
+from other Mumbai stations. mean is PM2.5 concentration, count is the
+number of valid unique quarter-hour readings (at least three), and
+timestamp_ist marks the hour end. These are auxiliary stations and
+are not extra scored test stations. available_at is the retained
+source file modification time, not a verified first publication time.
+
+XKDR_All_Stations.csv and Kaggle_All_Stations.csv preserve source station
+metadata. They include stations outside Mumbai and are lookup files,
+not additional observation datasets. Source IDs from different archives
+must not be treated as interchangeable.
+
+Negative or missing PM2.5 values were excluded from prepared hourly
+history. Extreme retained values are flagged for review. No automatic
+cross-source merging or historical gap filling was performed.
+
+Attribution: CPCB/CAAQMS; OpenAQ; XKDR; Rohan Rao/CPCB-derived station
+dataset. Original source terms continue to apply.

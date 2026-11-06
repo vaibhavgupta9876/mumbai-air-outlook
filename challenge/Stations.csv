@@ -1,0 +1,5 @@
+location_id,station_name,selected_sensor,latitude,longitude,timezone
+11611,"Malad West, Mumbai - IITM",12236426,19.19709,72.82204,Asia/Kolkata
+3409511,"Shivaji Nagar, Mumbai - BMC",12238576,19.060498,72.923356,Asia/Kolkata
+11606,"Borivali East, Mumbai - IITM",12236418,19.23241,72.86895,Asia/Kolkata
+3409510,"Byculla, Mumbai - BMC",12238567,18.9767,72.838,Asia/Kolkata
